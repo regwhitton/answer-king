@@ -10,17 +10,21 @@ import answer.king.model.Item;
 import answer.king.repo.ItemRepository;
 
 @Service
-@Transactional
+@Transactional(rollbackFor = InvalidItemException.class)
 public class ItemService {
 
 	@Autowired
 	private ItemRepository itemRepository;
 
+	@Autowired
+	private ItemValidator itemValidator;
+
 	public List<Item> getAll() {
 		return itemRepository.findAll();
 	}
 
-	public Item save(Item item) {
+	public Item save(Item item) throws InvalidItemException {
+		itemValidator.validate(item);
 		return itemRepository.save(item);
 	}
 }

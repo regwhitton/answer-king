@@ -20,6 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import answer.king.model.Item;
+import answer.king.service.InvalidItemException;
 import answer.king.service.ItemService;
 
 @RunWith(SpringRunner.class)
@@ -58,5 +59,18 @@ public class ItemControllerTest {
 						.accept(APPLICATION_JSON))
 				.andExpect(status().isOk()) //
 				.andExpect(content().json("{'id':3, 'name':'itemName', 'price':10}"));
+	}
+
+	@Test
+	public void postShouldReturn400WhenItemIsInvalid() throws Exception {
+		// Given
+		Item inputItem = item(null, null, 10.0);
+		given(itemService.save(refEq(inputItem))).willThrow(new InvalidItemException("item name must be provided"));
+
+		// when & then
+		mvc.perform( //
+				post("/item").contentType(APPLICATION_JSON).content("{\"price\":10}").accept(APPLICATION_JSON))
+				.andExpect(status().isBadRequest()) //
+				.andExpect(content().json("{'error':'item name must be provided'}"));
 	}
 }

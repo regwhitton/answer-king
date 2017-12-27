@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.refEq;
+import static org.mockito.Mockito.doThrow;
 
 import java.util.List;
 
@@ -23,6 +24,9 @@ public class ItemServiceTest {
 	@Mock
 	private ItemRepository itemRepository;
 
+	@Mock
+	private ItemValidator itemValidator;
+
 	@InjectMocks
 	private ItemService itemService;
 
@@ -39,7 +43,7 @@ public class ItemServiceTest {
 	}
 
 	@Test
-	public void saveShouldSaveItemToRepositoryAndReturnItemUpdatedWithId() {
+	public void saveShouldSaveItemToRepositoryAndReturnItemUpdatedWithId() throws Exception {
 		// Given
 		Item inputItem = item(null, "itemName", 10.0);
 		Item itemUpdatedWithId = item(3L, "itemName", 10.0);
@@ -51,5 +55,15 @@ public class ItemServiceTest {
 
 		// then
 		assertThat(returnedItem).isEqualToComparingFieldByField(itemUpdatedWithId);
+	}
+
+	@Test(expected = InvalidItemException.class)
+	public void saveShouldFailWhenItemIsInvalid() throws Exception {
+		// Given
+		Item inputItem = item(null, null, 10.0);
+		doThrow(new InvalidItemException("")).when(itemValidator).validate(refEq(inputItem));
+
+		// when
+		itemService.save(inputItem);
 	}
 }

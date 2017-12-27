@@ -13,7 +13,7 @@ public class ItemUtils {
 		Item item = new Item();
 		item.setId(id);
 		item.setName(name);
-		item.setPrice(BigDecimal.valueOf(price));
+		item.setPrice(price == null ? null : BigDecimal.valueOf(price));
 		return item;
 	}
 }
