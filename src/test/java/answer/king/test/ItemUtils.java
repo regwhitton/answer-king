@@ -1,0 +1,19 @@
+package answer.king.test;
+
+import java.math.BigDecimal;
+
+import answer.king.model.Item;
+
+public class ItemUtils {
+
+	private ItemUtils() {
+	}
+
+	public static Item item(Long id, String name, Double price) {
+		Item item = new Item();
+		item.setId(id);
+		item.setName(name);
+		item.setPrice(BigDecimal.valueOf(price));
+		return item;
+	}
+}
