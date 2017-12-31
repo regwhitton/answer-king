@@ -1,6 +1,6 @@
 package answer.king.service;
 
-import static answer.king.test.ItemUtils.item;
+import static answer.king.test.TestUtils.item;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;

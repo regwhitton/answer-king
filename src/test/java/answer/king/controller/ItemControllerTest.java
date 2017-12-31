@@ -1,6 +1,6 @@
 package answer.king.controller;
 
-import static answer.king.test.ItemUtils.*;
+import static answer.king.test.TestUtils.*;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.*;

@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 
 import answer.king.model.Item;
 
-public class ItemUtils {
+public class TestUtils {
 
-	private ItemUtils() {
+	private TestUtils() {
 	}
 
 	public static Item item(Long id, String name, Double price) {

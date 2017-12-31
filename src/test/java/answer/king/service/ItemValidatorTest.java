@@ -1,6 +1,6 @@
 package answer.king.service;
 
-import static answer.king.test.ItemUtils.item;
+import static answer.king.test.TestUtils.item;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
