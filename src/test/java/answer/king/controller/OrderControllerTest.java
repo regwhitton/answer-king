@@ -30,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import answer.king.model.Order;
 import answer.king.model.Receipt;
+import answer.king.service.InsufficientPaymentException;
 import answer.king.service.OrderService;
 
 @RunWith(SpringRunner.class)
@@ -102,5 +103,22 @@ public class OrderControllerTest {
 				.andExpect(content().json("{'payment':" + payment + ",'order':{'id':" + orderId
 						+ ", 'paid':false, 'items':[{'id':" + itemId + ",'name':'itemName','price':" + price
 						+ "}]},'change':" + expectedChange + "}"));
+	}
+
+	@Test
+	public void putPaymentShouldReturn400WhenPaymentIsInsuffcient() throws Exception {
+		// Given
+		Long orderId = 101L;
+		BigDecimal payment = BigDecimal.TEN;
+
+		given(orderService.pay(eq(orderId), eq(payment)))
+				.willThrow(new InsufficientPaymentException("insufficient payment"));
+
+		// when & then
+		mvc.perform(//
+				put("/order/" + orderId + "/pay") //
+						.contentType(APPLICATION_JSON).content(payment.toString()).accept(APPLICATION_JSON)) //
+				.andExpect(status().isBadRequest()) //
+				.andExpect(content().json("{'error':'insufficient payment'}"));
 	}
 }

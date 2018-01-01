@@ -1,6 +1,5 @@
 package answer.king.controller;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +39,7 @@ public class ItemController {
 	@ResponseStatus(value = HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(InvalidItemException.class)
 	@ResponseBody
-	public Error handleException(InvalidItemException e) throws IOException {
+	public Error handleException(InvalidItemException e) {
 		return new Error(e.getMessage());
 	}
 }

@@ -14,7 +14,7 @@ import answer.king.repo.ItemRepository;
 import answer.king.repo.OrderRepository;
 
 @Service
-@Transactional
+@Transactional(rollbackFor = InsufficientPaymentException.class)
 public class OrderService {
 
 	@Autowired
@@ -41,12 +41,30 @@ public class OrderService {
 		orderRepository.save(order);
 	}
 
-	public Receipt pay(Long id, BigDecimal payment) {
+	public Receipt pay(Long id, BigDecimal payment) throws InsufficientPaymentException {
 		Order order = orderRepository.findOne(id);
+		validatePaymentIsSufficientForOrder(payment, order);
+		updateOrderAsPaid(order);
+		return receiptForPaymentOfOrder(payment, order);
+	}
 
+	private void validatePaymentIsSufficientForOrder(BigDecimal payment, Order order)
+			throws InsufficientPaymentException {
+		if (payment.compareTo(totalOrderPrice(order)) < 0) {
+			throw new InsufficientPaymentException("insufficient payment");
+		}
+	}
+
+	private BigDecimal totalOrderPrice(Order order) {
+		return order.getItems().stream().map(Item::getPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	private void updateOrderAsPaid(Order order) {
 		order.setPaid(true);
 		orderRepository.save(order);
+	}
 
+	private Receipt receiptForPaymentOfOrder(BigDecimal payment, Order order) {
 		Receipt receipt = new Receipt();
 		receipt.setPayment(payment);
 		receipt.setOrder(order);

@@ -91,7 +91,7 @@ public class OrderServiceTest {
 	}
 
 	@Test
-	public void payShouldMarkOrderAsPaidInRepository() {
+	public void payShouldMarkOrderAsPaidInRepository() throws Exception {
 		// Given
 		Long orderId = 101L;
 		Long itemId = 202L;
@@ -111,5 +111,20 @@ public class OrderServiceTest {
 		then(orderRepository).should().save(orderCaptor.capture());
 		Order savedOrder = orderCaptor.getValue();
 		assertThat(savedOrder).isEqualToComparingFieldByFieldRecursively(expectedOrder);
+	}
+
+	@Test(expected = InsufficientPaymentException.class)
+	public void payShouldFailIfPaymentIsInsufficient() throws Exception {
+		// Given
+		Long orderId = 101L;
+		Order order = order(orderId, false, item(202L, "itemName", 10.01));
+		BigDecimal payment = BigDecimal.TEN;
+
+		given(orderRepository.findOne(eq(orderId))).willReturn(order);
+
+		// when
+		orderService.pay(orderId, payment);
+
+		// then exception
 	}
 }
