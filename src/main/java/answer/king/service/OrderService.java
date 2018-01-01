@@ -44,6 +44,9 @@ public class OrderService {
 	public Receipt pay(Long id, BigDecimal payment) {
 		Order order = orderRepository.findOne(id);
 
+		order.setPaid(true);
+		orderRepository.save(order);
+
 		Receipt receipt = new Receipt();
 		receipt.setPayment(payment);
 		receipt.setOrder(order);

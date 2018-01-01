@@ -89,7 +89,7 @@ public class OrderServiceTest {
 		assertThat(savedOrder).isEqualToComparingFieldByFieldRecursively(expectedOrder);
 		assertThat(savedOrder.getItems().get(0).getOrder()).isEqualTo(savedOrder);
 	}
-/*-
+
 	@Test
 	public void payShouldMarkOrderAsPaidInRepository() {
 		// Given
@@ -105,12 +105,11 @@ public class OrderServiceTest {
 
 		// then
 		Order expectedOrder = order(orderId, true, item(itemId, "itemName", 9.99));
-		Receipt expectedReceipt = receipt(expectedOrder, BigDecimal.valueOf(0.01));
+		Receipt expectedReceipt = receipt(expectedOrder, payment);
 		assertThat(returnedReceipt).isEqualToComparingFieldByFieldRecursively(expectedReceipt);
 
 		then(orderRepository).should().save(orderCaptor.capture());
 		Order savedOrder = orderCaptor.getValue();
 		assertThat(savedOrder).isEqualToComparingFieldByFieldRecursively(expectedOrder);
 	}
-*/
 }
