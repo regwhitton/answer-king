@@ -1,12 +1,13 @@
 package answer.king.service;
 
 import static answer.king.test.TestUtils.item;
-import static answer.king.test.TestUtils.*;
+import static answer.king.test.TestUtils.order;
+import static answer.king.test.TestUtils.receipt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Matchers.refEq;
 
 import java.math.BigDecimal;
@@ -24,6 +25,7 @@ import answer.king.model.Order;
 import answer.king.model.Receipt;
 import answer.king.repo.ItemRepository;
 import answer.king.repo.OrderRepository;
+import answer.king.repo.ReceiptRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrderServiceTest {
@@ -34,11 +36,17 @@ public class OrderServiceTest {
 	@Mock
 	private ItemRepository itemRepository;
 
+	@Mock
+	private ReceiptRepository receiptRepository;
+
 	@InjectMocks
 	private OrderService orderService;
 
 	@Captor
 	private ArgumentCaptor<Order> orderCaptor;
+
+	@Captor
+	private ArgumentCaptor<Receipt> receiptCaptor;
 
 	@Test
 	public void getAllShouldFindAllOrdersInRepository() {
@@ -97,20 +105,28 @@ public class OrderServiceTest {
 		Long itemId = 202L;
 		Order existingOrder = order(orderId, false, item(itemId, "itemName", 9.99));
 		BigDecimal payment = BigDecimal.TEN;
-
 		given(orderRepository.findOne(eq(orderId))).willReturn(existingOrder);
+
+		Long receiptId = 303L;
+		Receipt persistedReceipt = receipt(order(orderId, true, item(itemId, "itemName", 9.99)), payment);
+		persistedReceipt.setId(receiptId);
+		given(receiptRepository.save(any(Receipt.class))).willReturn(persistedReceipt);
 
 		// when
 		Receipt returnedReceipt = orderService.pay(orderId, payment);
 
 		// then
-		Order expectedOrder = order(orderId, true, item(itemId, "itemName", 9.99));
-		Receipt expectedReceipt = receipt(expectedOrder, payment);
-		assertThat(returnedReceipt).isEqualToComparingFieldByFieldRecursively(expectedReceipt);
-
 		then(orderRepository).should().save(orderCaptor.capture());
 		Order savedOrder = orderCaptor.getValue();
+		Order expectedOrder = order(orderId, true, item(itemId, "itemName", 9.99));
 		assertThat(savedOrder).isEqualToComparingFieldByFieldRecursively(expectedOrder);
+
+		then(receiptRepository).should().save(receiptCaptor.capture());
+		Receipt savedReceipt = receiptCaptor.getValue();
+		Receipt expectedReceipt = receipt(expectedOrder, payment);
+		assertThat(savedReceipt).isEqualToComparingFieldByFieldRecursively(expectedReceipt);
+
+		assertThat(returnedReceipt).isEqualToComparingFieldByFieldRecursively(persistedReceipt);
 	}
 
 	@Test(expected = InsufficientPaymentException.class)
