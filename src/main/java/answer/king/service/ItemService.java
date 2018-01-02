@@ -1,5 +1,6 @@
 package answer.king.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,13 @@ public class ItemService {
 	}
 
 	public Item save(Item item) throws InvalidItemException {
+		itemValidator.validate(item);
+		return itemRepository.save(item);
+	}
+
+	public Item updatePrice(Long itemId, BigDecimal price) throws InvalidItemException {
+		Item item = itemRepository.findOne(itemId);
+		item.setPrice(price);
 		itemValidator.validate(item);
 		return itemRepository.save(item);
 	}

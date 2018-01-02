@@ -4,9 +4,12 @@ import static answer.king.test.TestUtils.item;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.doThrow;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.junit.Test;
@@ -65,5 +68,39 @@ public class ItemServiceTest {
 
 		// when
 		itemService.save(inputItem);
+	}
+
+	@Test
+	public void updatePriceShouldUpdateItemInRepositoryAndReturnIt() throws Exception {
+		// Given
+		Long itemId = 3L;
+		Item originalItem = item(itemId, "itemName", 10.0);
+		Double newPrice = 15.0;
+		Item expectedItem = item(itemId, "itemName", newPrice);
+
+		given(itemRepository.findOne(eq(itemId))).willReturn(originalItem);
+		given(itemRepository.save(refEq(expectedItem))).willReturn(expectedItem);
+
+		// when
+		Item returnedItem = itemService.updatePrice(itemId, BigDecimal.valueOf(newPrice));
+
+		// then
+		then(itemRepository).should().save(refEq(expectedItem));
+		assertThat(returnedItem).isEqualToComparingFieldByField(expectedItem);
+	}
+
+	@Test(expected = InvalidItemException.class)
+	public void updatePriceShouldFailWhenPriceIsInvalid() throws Exception {
+		Long itemId = 3L;
+		Double invalidPrice = -1.0;
+
+		given(itemRepository.findOne(eq(itemId))).willReturn(item(itemId, "itemName", 10.0));
+		doThrow(new InvalidItemException("invalid price")).when(itemValidator)
+				.validate(refEq(item(itemId, "itemName", invalidPrice)));
+
+		// when
+		itemService.updatePrice(itemId, BigDecimal.valueOf(invalidPrice));
+
+		// then exception
 	}
 }

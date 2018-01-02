@@ -1,14 +1,18 @@
 package answer.king.controller;
 
-import static answer.king.test.TestUtils.*;
+import static answer.king.test.TestUtils.item;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.refEq;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,5 +76,39 @@ public class ItemControllerTest {
 				post("/item").contentType(APPLICATION_JSON).content("{\"price\":10}").accept(APPLICATION_JSON))
 				.andExpect(status().isBadRequest()) //
 				.andExpect(content().json("{'error':'item name must be provided'}"));
+	}
+
+	@Test
+	public void updatePriceShouldUseItemService() throws Exception {
+		// Given
+		Long itemId = 3L;
+		Double newPrice = 15.0;
+
+		given(itemService.updatePrice(eq(itemId), eq(BigDecimal.valueOf(newPrice))))
+				.willReturn(item(itemId, "itemName", newPrice));
+
+		// when & then
+		mvc.perform( //
+				put("/item/" + itemId + "/price").contentType(APPLICATION_JSON).content(newPrice.toString())
+						.accept(APPLICATION_JSON))
+				.andExpect(status().isOk()) //
+				.andExpect(content().json("{'id':" + itemId + ", 'name':'itemName', 'price':" + newPrice + "}"));
+	}
+
+	@Test
+	public void updatePriceShouldReturn400WhenPriceIsInvalid() throws Exception {
+		// Given
+		Long itemId = 3L;
+		Double newPrice = -1.0;
+
+		given(itemService.updatePrice(eq(itemId), eq(BigDecimal.valueOf(newPrice))))
+				.willThrow(new InvalidItemException("invalid price"));
+
+		// when & then
+		mvc.perform( //
+				put("/item/" + itemId + "/price").contentType(APPLICATION_JSON).content(newPrice.toString())
+						.accept(APPLICATION_JSON))
+				.andExpect(status().isBadRequest()) //
+				.andExpect(content().json("{'error':'invalid price'}"));
 	}
 }

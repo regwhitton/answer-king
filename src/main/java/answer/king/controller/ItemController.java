@@ -1,10 +1,12 @@
 package answer.king.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -34,6 +36,11 @@ public class ItemController {
 	@ApiResponses(value = { @ApiResponse(code = 400, message = "Invalid item", response = Error.class) })
 	public Item create(@RequestBody Item item) throws InvalidItemException {
 		return itemService.save(item);
+	}
+
+	@RequestMapping(value = "/{id}/price", method = RequestMethod.PUT)
+	public Item updatePrice(@PathVariable("id") Long id, @RequestBody BigDecimal price) throws InvalidItemException {
+		return itemService.updatePrice(id, price);
 	}
 
 	@ResponseStatus(value = HttpStatus.BAD_REQUEST)
