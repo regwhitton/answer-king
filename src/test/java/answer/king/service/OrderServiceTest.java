@@ -11,6 +11,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.refEq;
+import static org.mockito.Mockito.never;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -93,17 +94,18 @@ public class OrderServiceTest {
 		Long orderId = 101L;
 		Long itemId = 202L;
 		Long lineItemId = 303L;
+		Integer quantity = 22;
 
 		Order order = order(orderId, false);
 		Item item = item(itemId, "itemName", 10.0);
-		LineItem persistedLineItem = lineItem(lineItemId, item, 1);
+		LineItem persistedLineItem = lineItem(lineItemId, item, quantity);
 
 		given(orderRepository.findOne(eq(orderId))).willReturn(order);
 		given(itemRepository.findOne(eq(itemId))).willReturn(item);
 		given(lineItemRepository.save(any(LineItem.class))).willReturn(persistedLineItem);
 
 		// when
-		orderService.addItem(orderId, itemId);
+		orderService.addItem(orderId, itemId, quantity);
 
 		// then
 		then(lineItemRepository).should().save(lineItemCaptor.capture());
@@ -111,7 +113,7 @@ public class OrderServiceTest {
 		assertThat(savedLineItem.getId()).isNull();
 		assertThat(savedLineItem.getName()).isEqualTo("itemName");
 		assertThat(savedLineItem.getPrice()).isEqualByComparingTo(BigDecimal.TEN);
-		assertThat(savedLineItem.getQuantity()).isEqualTo(1);
+		assertThat(savedLineItem.getQuantity()).isEqualTo(quantity);
 		assertThat(savedLineItem.getItem()).isSameAs(item);
 		assertThat(savedLineItem.getOrder()).isSameAs(order);
 
@@ -120,6 +122,39 @@ public class OrderServiceTest {
 		assertThat(savedOrder).isSameAs(order);
 		assertThat(savedOrder.getLineItems()).hasSize(1);
 		assertThat(savedOrder.getLineItems().get(0)).isSameAs(persistedLineItem);
+	}
+
+	@Test
+	public void addItemShouldAddQuantityToExistingLineItem() {
+		// Given
+		Long orderId = 101L;
+		Long itemId = 202L;
+		Long lineItemId = 303L;
+		Integer existingQuantity = 11;
+		Integer newQuantity = 22;
+
+		Item item = item(itemId, "itemName", 10.0);
+		LineItem lineItem = lineItem(lineItemId, item, existingQuantity);
+		Order order = order(orderId, false, lineItem);
+
+		given(orderRepository.findOne(eq(orderId))).willReturn(order);
+		given(itemRepository.findOne(eq(itemId))).willReturn(item);
+
+		// when
+		orderService.addItem(orderId, itemId, newQuantity);
+
+		// then
+		then(lineItemRepository).should().save(lineItemCaptor.capture());
+		LineItem savedLineItem = lineItemCaptor.getValue();
+		assertThat(savedLineItem).isSameAs(lineItem);
+		assertThat(savedLineItem.getQuantity()).isEqualTo(existingQuantity + newQuantity);
+		assertThat(savedLineItem.getId()).isEqualTo(lineItemId);
+		assertThat(savedLineItem.getName()).isEqualTo("itemName");
+		assertThat(savedLineItem.getPrice()).isEqualByComparingTo(BigDecimal.TEN);
+		assertThat(savedLineItem.getItem()).isSameAs(item);
+		assertThat(savedLineItem.getOrder()).isSameAs(order);
+
+		then(orderRepository).should(never()).save(any(Order.class));
 	}
 
 	@Test

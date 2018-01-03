@@ -77,12 +77,28 @@ public class OrderControllerTest {
 		// Given
 		Long orderId = 101L;
 		Long itemId = 202L;
+		Integer defaultQuantity = 1;
 
 		// when
 		mvc.perform(put("/order/" + orderId + "/addItem/" + itemId)).andExpect(status().isOk());
 
 		// then
-		then(orderService).should().addItem(eq(orderId), eq(itemId));
+		then(orderService).should().addItem(eq(orderId), eq(itemId), eq(defaultQuantity));
+	}
+
+	@Test
+	public void putWithQuantityShouldAddItemWithQuantity() throws Exception {
+		// Given
+		Long orderId = 101L;
+		Long itemId = 202L;
+		Integer quantity = 22;
+
+		// when
+		mvc.perform(put("/order/" + orderId + "/addItem/" + itemId + "/quantity/" + quantity))
+				.andExpect(status().isOk());
+
+		// then
+		then(orderService).should().addItem(eq(orderId), eq(itemId), eq(quantity));
 	}
 
 	@Test

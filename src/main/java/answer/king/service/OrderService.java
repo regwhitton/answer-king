@@ -2,6 +2,7 @@ package answer.king.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,24 +41,43 @@ public class OrderService {
 		return orderRepository.save(order);
 	}
 
-	public void addItem(Long id, Long itemId) {
+	public void addItem(Long id, Long itemId, Integer quantity) {
 		Order order = orderRepository.findOne(id);
+
+		Optional<LineItem> lineItem = findExistingLineItem(order, itemId);
+		if (lineItem.isPresent()) {
+			addQuantityToLineItem(lineItem.get(), quantity);
+		} else {
+			addNewLineItemToOrder(order, itemId, quantity);
+		}
+	}
+
+	private Optional<LineItem> findExistingLineItem(Order order, Long itemId) {
+		return order.getLineItems().stream().filter(lineItem -> lineItem.getItem().getId() == itemId).findFirst();
+	}
+
+	private void addQuantityToLineItem(LineItem lineItem, Integer quantity) {
+		lineItem.setQuantity(lineItem.getQuantity() + quantity);
+		lineItemRepository.save(lineItem);
+	}
+
+	private void addNewLineItemToOrder(Order order, Long itemId, Integer quantity) {
 		Item item = itemRepository.findOne(itemId);
 
-		LineItem lineItem = generateLineItem(item, order);
+		LineItem lineItem = lineItemRepository.save(lineItem(item, order, quantity));
 
 		order.getLineItems().add(lineItem);
 		orderRepository.save(order);
 	}
 
-	private LineItem generateLineItem(Item item, Order order) {
+	private LineItem lineItem(Item item, Order order, Integer quantity) {
 		LineItem lineItem = new LineItem();
 		lineItem.setName(item.getName());
 		lineItem.setPrice(item.getPrice());
 		lineItem.setOrder(order);
 		lineItem.setItem(item);
-		lineItem.setQuantity(1);
-		return lineItemRepository.save(lineItem);
+		lineItem.setQuantity(quantity);
+		return lineItem;
 	}
 
 	public Receipt pay(Long id, BigDecimal payment) throws InsufficientPaymentException {
