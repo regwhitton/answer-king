@@ -1,13 +1,15 @@
 package answer.king.service;
 
 import static answer.king.test.TestUtils.item;
+import static answer.king.test.TestUtils.lineItem;
 import static answer.king.test.TestUtils.order;
 import static answer.king.test.TestUtils.receipt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.refEq;
 
 import java.math.BigDecimal;
@@ -21,9 +23,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import answer.king.model.Item;
+import answer.king.model.LineItem;
 import answer.king.model.Order;
 import answer.king.model.Receipt;
 import answer.king.repo.ItemRepository;
+import answer.king.repo.LineItemRepository;
 import answer.king.repo.OrderRepository;
 import answer.king.repo.ReceiptRepository;
 
@@ -39,6 +44,9 @@ public class OrderServiceTest {
 	@Mock
 	private ReceiptRepository receiptRepository;
 
+	@Mock
+	private LineItemRepository lineItemRepository;
+
 	@InjectMocks
 	private OrderService orderService;
 
@@ -47,6 +55,9 @@ public class OrderServiceTest {
 
 	@Captor
 	private ArgumentCaptor<Receipt> receiptCaptor;
+
+	@Captor
+	private ArgumentCaptor<LineItem> lineItemCaptor;
 
 	@Test
 	public void getAllShouldFindAllOrdersInRepository() {
@@ -77,25 +88,38 @@ public class OrderServiceTest {
 	}
 
 	@Test
-	public void addItemShouldAttachGivenItemToGivenOrderInRepository() {
+	public void addItemShouldCreateLineItemAndAttachToOrderInRepository() {
 		// Given
 		Long orderId = 101L;
 		Long itemId = 202L;
+		Long lineItemId = 303L;
 
-		given(orderRepository.findOne(eq(orderId))).willReturn(order(orderId, false));
-		given(itemRepository.findOne(eq(itemId))).willReturn(item(itemId, "itemName", 10.0));
+		Order order = order(orderId, false);
+		Item item = item(itemId, "itemName", 10.0);
+		LineItem persistedLineItem = lineItem(lineItemId, item, 1);
+
+		given(orderRepository.findOne(eq(orderId))).willReturn(order);
+		given(itemRepository.findOne(eq(itemId))).willReturn(item);
+		given(lineItemRepository.save(any(LineItem.class))).willReturn(persistedLineItem);
 
 		// when
 		orderService.addItem(orderId, itemId);
 
 		// then
+		then(lineItemRepository).should().save(lineItemCaptor.capture());
+		LineItem savedLineItem = lineItemCaptor.getValue();
+		assertThat(savedLineItem.getId()).isNull();
+		assertThat(savedLineItem.getName()).isEqualTo("itemName");
+		assertThat(savedLineItem.getPrice()).isEqualByComparingTo(BigDecimal.TEN);
+		assertThat(savedLineItem.getQuantity()).isEqualTo(1);
+		assertThat(savedLineItem.getItem()).isSameAs(item);
+		assertThat(savedLineItem.getOrder()).isSameAs(order);
+
 		then(orderRepository).should().save(orderCaptor.capture());
-
 		Order savedOrder = orderCaptor.getValue();
-		Order expectedOrder = order(orderId, false, item(itemId, "itemName", 10.0));
-
-		assertThat(savedOrder).isEqualToComparingFieldByFieldRecursively(expectedOrder);
-		assertThat(savedOrder.getItems().get(0).getOrder()).isEqualTo(savedOrder);
+		assertThat(savedOrder).isSameAs(order);
+		assertThat(savedOrder.getLineItems()).hasSize(1);
+		assertThat(savedOrder.getLineItems().get(0)).isSameAs(persistedLineItem);
 	}
 
 	@Test
@@ -103,14 +127,17 @@ public class OrderServiceTest {
 		// Given
 		Long orderId = 101L;
 		Long itemId = 202L;
-		Order existingOrder = order(orderId, false, item(itemId, "itemName", 9.99));
+		Long receiptId = 303L;
+		Long lineItemId = 303L;
 		BigDecimal payment = BigDecimal.TEN;
+
+		LineItem existingLineItem = lineItem(lineItemId, item(itemId, "itemName", 9.99), 1);
+		Order existingOrder = order(orderId, false, existingLineItem);
 		given(orderRepository.findOne(eq(orderId))).willReturn(existingOrder);
 
-		Long receiptId = 303L;
-		Receipt persistedReceipt = receipt(order(orderId, true, item(itemId, "itemName", 9.99)), payment);
-		persistedReceipt.setId(receiptId);
-		given(receiptRepository.save(any(Receipt.class))).willReturn(persistedReceipt);
+		Order paidOrder = order(orderId, true, existingLineItem);
+		Receipt receiptWithId = receipt(receiptId, paidOrder, payment);
+		given(receiptRepository.save(any(Receipt.class))).willReturn(receiptWithId);
 
 		// when
 		Receipt returnedReceipt = orderService.pay(orderId, payment);
@@ -118,22 +145,23 @@ public class OrderServiceTest {
 		// then
 		then(orderRepository).should().save(orderCaptor.capture());
 		Order savedOrder = orderCaptor.getValue();
-		Order expectedOrder = order(orderId, true, item(itemId, "itemName", 9.99));
-		assertThat(savedOrder).isEqualToComparingFieldByFieldRecursively(expectedOrder);
+		Order expectedPaidOrder = order(orderId, true, existingLineItem);
+		assertThat(savedOrder).isEqualToComparingFieldByFieldRecursively(expectedPaidOrder);
 
 		then(receiptRepository).should().save(receiptCaptor.capture());
 		Receipt savedReceipt = receiptCaptor.getValue();
-		Receipt expectedReceipt = receipt(expectedOrder, payment);
-		assertThat(savedReceipt).isEqualToComparingFieldByFieldRecursively(expectedReceipt);
+		Receipt expectedReceiptWithoutId = receipt(null, expectedPaidOrder, payment);
+		assertThat(savedReceipt).isEqualToComparingFieldByFieldRecursively(expectedReceiptWithoutId);
 
-		assertThat(returnedReceipt).isEqualToComparingFieldByFieldRecursively(persistedReceipt);
+		Receipt expectedReceiptWithId = receipt(receiptId, expectedPaidOrder, payment);
+		assertThat(returnedReceipt).isEqualToComparingFieldByFieldRecursively(expectedReceiptWithId);
 	}
 
 	@Test(expected = InsufficientPaymentException.class)
 	public void payShouldFailIfPaymentIsInsufficient() throws Exception {
 		// Given
 		Long orderId = 101L;
-		Order order = order(orderId, false, item(202L, "itemName", 10.01));
+		Order order = order(orderId, false, lineItem(303L, item(202L, "itemName", 10.01), 1));
 		BigDecimal payment = BigDecimal.TEN;
 
 		given(orderRepository.findOne(eq(orderId))).willReturn(order);

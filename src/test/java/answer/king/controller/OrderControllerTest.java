@@ -1,6 +1,7 @@
 package answer.king.controller;
 
 import static answer.king.test.TestUtils.item;
+import static answer.king.test.TestUtils.lineItem;
 import static answer.king.test.TestUtils.order;
 import static answer.king.test.TestUtils.receipt;
 import static org.assertj.core.util.Lists.newArrayList;
@@ -50,13 +51,14 @@ public class OrderControllerTest {
 	@Test
 	public void getShouldGetAllOrdersFromOrderService() throws Exception {
 		// Given
-		given(orderService.getAll()).willReturn(newArrayList(order(1L, false, item(2L, "itemName", 10.0))));
+		Order order = order(1L, false, lineItem(3L, item(2L, "itemName", 10.0), 1));
+		given(orderService.getAll()).willReturn(newArrayList(order));
 
 		// when & then
 		mvc.perform(get("/order").accept(APPLICATION_JSON)) //
 				.andExpect(status().isOk()) //
-				.andExpect(
-						content().json("[{'id':1, 'paid':false, 'items':[{'id':2, 'name':'itemName', 'price':10}]}]"));
+				.andExpect(content().json(
+						"[{'id':1, 'paid':false, 'items':[{'id':3, 'name':'itemName', 'price':10, 'quantity':1}]}]"));
 	}
 
 	@Test
@@ -88,11 +90,16 @@ public class OrderControllerTest {
 		// Given
 		Long orderId = 101L;
 		Long itemId = 202L;
+		Long lineItemId = 303L;
+		Long receiptId = 404L;
+
 		BigDecimal payment = BigDecimal.TEN;
 		Double price = 25.0;
+		Integer quantity = 1;
 		Double expectedChange = payment.doubleValue() - price;
 
-		Receipt receipt = receipt(order(orderId, false, item(itemId, "itemName", price)), payment);
+		Order order = order(orderId, false, lineItem(lineItemId, item(itemId, "itemName", price), quantity));
+		Receipt receipt = receipt(receiptId, order, payment);
 		given(orderService.pay(eq(orderId), eq(payment))).willReturn(receipt);
 
 		// when & then
@@ -101,8 +108,8 @@ public class OrderControllerTest {
 						.contentType(APPLICATION_JSON).content(payment.toString()).accept(APPLICATION_JSON)) //
 				.andExpect(status().isOk()) //
 				.andExpect(content().json("{'payment':" + payment + ",'order':{'id':" + orderId
-						+ ", 'paid':false, 'items':[{'id':" + itemId + ",'name':'itemName','price':" + price
-						+ "}]},'change':" + expectedChange + "}"));
+						+ ", 'paid':false, 'items':[{'id':" + lineItemId + ",'name':'itemName','price':" + price
+						+ ",'quantity':" + quantity + "}]},'change':" + expectedChange + "}"));
 	}
 
 	@Test

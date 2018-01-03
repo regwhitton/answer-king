@@ -5,6 +5,7 @@ import static org.assertj.core.util.Lists.newArrayList;
 import java.math.BigDecimal;
 
 import answer.king.model.Item;
+import answer.king.model.LineItem;
 import answer.king.model.Order;
 import answer.king.model.Receipt;
 
@@ -21,19 +22,30 @@ public class TestUtils {
 		return item;
 	}
 
-	public static Order order(Long id, Boolean paid, Item... items) {
+	public static LineItem lineItem(Long id, Item item, Integer quantity) {
+		LineItem lineItem = new LineItem();
+		lineItem.setId(id);
+		lineItem.setName(item.getName());
+		lineItem.setPrice(item.getPrice());
+		lineItem.setItem(item);
+		lineItem.setQuantity(quantity);
+		return lineItem;
+	}
+
+	public static Order order(Long id, Boolean paid, LineItem... items) {
 		Order order = new Order();
 		order.setId(id);
 		order.setPaid(paid);
-		order.setItems(newArrayList(items));
-		for (Item item : items) {
+		order.setLineItems(newArrayList(items));
+		for (LineItem item : items) {
 			item.setOrder(order);
 		}
 		return order;
 	}
 
-	public static Receipt receipt(Order order, BigDecimal payment) {
+	public static Receipt receipt(Long id, Order order, BigDecimal payment) {
 		Receipt receipt = new Receipt();
+		receipt.setId(id);
 		receipt.setOrder(order);
 		receipt.setPayment(payment);
 		return receipt;

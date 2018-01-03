@@ -10,6 +10,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity
 @Table(name = "T_ORDER")
 public class Order {
@@ -21,7 +23,8 @@ public class Order {
 	private Boolean paid = false;
 
 	@OneToMany(mappedBy = "order", cascade = { CascadeType.ALL, CascadeType.PERSIST })
-	private List<Item> items;
+	@JsonProperty("items")
+	private List<LineItem> lineItems;
 
 	public Long getId() {
 		return id;
@@ -39,11 +42,11 @@ public class Order {
 		this.paid = paid;
 	}
 
-	public List<Item> getItems() {
-		return items;
+	public List<LineItem> getLineItems() {
+		return lineItems;
 	}
 
-	public void setItems(List<Item> items) {
-		this.items = items;
+	public void setLineItems(List<LineItem> lineItems) {
+		this.lineItems = lineItems;
 	}
 }
