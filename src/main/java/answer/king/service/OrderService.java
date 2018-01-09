@@ -53,7 +53,7 @@ public class OrderService {
 	}
 
 	private Optional<LineItem> findExistingLineItem(Order order, Long itemId) {
-		return order.getLineItems().stream().filter(lineItem -> lineItem.getItem().getId() == itemId).findFirst();
+		return order.getLineItems().stream().filter(lineItem -> lineItem.getItem().getId().equals(itemId)).findFirst();
 	}
 
 	private void addQuantityToLineItem(LineItem lineItem, Integer quantity) {

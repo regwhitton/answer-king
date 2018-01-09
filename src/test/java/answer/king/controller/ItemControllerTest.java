@@ -53,7 +53,7 @@ public class ItemControllerTest {
 	public void postShouldCreateItemUsingItemService() throws Exception {
 		// Given
 		Item inputItem = item(null, "itemName", 10.0);
-		Item itemUpdatedWithId = item(3L, "itemName", 10.0);
+		Item itemUpdatedWithId = item(3030L, "itemName", 10.0);
 
 		given(itemService.save(refEq(inputItem))).willReturn(itemUpdatedWithId);
 
@@ -62,7 +62,7 @@ public class ItemControllerTest {
 				post("/item").contentType(APPLICATION_JSON).content("{\"name\":\"itemName\",\"price\":10}")
 						.accept(APPLICATION_JSON))
 				.andExpect(status().isOk()) //
-				.andExpect(content().json("{'id':3, 'name':'itemName', 'price':10}"));
+				.andExpect(content().json("{'id':3030, 'name':'itemName', 'price':10}"));
 	}
 
 	@Test
@@ -81,15 +81,15 @@ public class ItemControllerTest {
 	@Test
 	public void updatePriceShouldUseItemService() throws Exception {
 		// Given
-		Long itemId = 3L;
-		Double newPrice = 15.0;
+		long itemId = 3030L;
+		double newPrice = 15.0;
 
 		given(itemService.updatePrice(eq(itemId), eq(BigDecimal.valueOf(newPrice))))
 				.willReturn(item(itemId, "itemName", newPrice));
 
 		// when & then
 		mvc.perform( //
-				put("/item/" + itemId + "/price").contentType(APPLICATION_JSON).content(newPrice.toString())
+				put("/item/" + itemId + "/price").contentType(APPLICATION_JSON).content("" + newPrice)
 						.accept(APPLICATION_JSON))
 				.andExpect(status().isOk()) //
 				.andExpect(content().json("{'id':" + itemId + ", 'name':'itemName', 'price':" + newPrice + "}"));
@@ -98,15 +98,15 @@ public class ItemControllerTest {
 	@Test
 	public void updatePriceShouldReturn400WhenPriceIsInvalid() throws Exception {
 		// Given
-		Long itemId = 3L;
-		Double newPrice = -1.0;
+		long itemId = 3030L;
+		double newPrice = -1.0;
 
 		given(itemService.updatePrice(eq(itemId), eq(BigDecimal.valueOf(newPrice))))
 				.willThrow(new InvalidItemException("invalid price"));
 
 		// when & then
 		mvc.perform( //
-				put("/item/" + itemId + "/price").contentType(APPLICATION_JSON).content(newPrice.toString())
+				put("/item/" + itemId + "/price").contentType(APPLICATION_JSON).content("" + newPrice)
 						.accept(APPLICATION_JSON))
 				.andExpect(status().isBadRequest()) //
 				.andExpect(content().json("{'error':'invalid price'}"));

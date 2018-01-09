@@ -63,7 +63,7 @@ public class OrderServiceTest {
 	@Test
 	public void getAllShouldFindAllOrdersInRepository() {
 		// Given
-		Long orderId = 101L;
+		long orderId = 1010L;
 		given(orderRepository.findAll()).willReturn(newArrayList(order(orderId, false)));
 
 		// when
@@ -91,10 +91,10 @@ public class OrderServiceTest {
 	@Test
 	public void addItemShouldCreateLineItemAndAttachToOrderInRepository() {
 		// Given
-		Long orderId = 101L;
-		Long itemId = 202L;
-		Long lineItemId = 303L;
-		Integer quantity = 22;
+		long orderId = 1010L;
+		long itemId = 2020L;
+		long lineItemId = 3030L;
+		int quantity = 22;
 
 		Order order = order(orderId, false);
 		Item item = item(itemId, "itemName", 10.0);
@@ -127,11 +127,11 @@ public class OrderServiceTest {
 	@Test
 	public void addItemShouldAddQuantityToExistingLineItem() {
 		// Given
-		Long orderId = 101L;
-		Long itemId = 202L;
-		Long lineItemId = 303L;
-		Integer existingQuantity = 11;
-		Integer newQuantity = 22;
+		long orderId = 1010L;
+		long itemId = 2020L;
+		long lineItemId = 3030L;
+		int existingQuantity = 11;
+		int newQuantity = 22;
 
 		Item item = item(itemId, "itemName", 10.0);
 		LineItem lineItem = lineItem(lineItemId, item, existingQuantity);
@@ -160,10 +160,10 @@ public class OrderServiceTest {
 	@Test
 	public void payShouldMarkOrderAsPaidInRepository() throws Exception {
 		// Given
-		Long orderId = 101L;
-		Long itemId = 202L;
-		Long receiptId = 303L;
-		Long lineItemId = 303L;
+		long orderId = 1010L;
+		long itemId = 2020L;
+		long receiptId = 3030L;
+		long lineItemId = 3030L;
 		BigDecimal payment = BigDecimal.TEN;
 
 		LineItem existingLineItem = lineItem(lineItemId, item(itemId, "itemName", 9.99), 1);
@@ -195,7 +195,7 @@ public class OrderServiceTest {
 	@Test(expected = InsufficientPaymentException.class)
 	public void payShouldFailIfPaymentIsInsufficient() throws Exception {
 		// Given
-		Long orderId = 101L;
+		long orderId = 1010L;
 		Order order = order(orderId, false, lineItem(303L, item(202L, "itemName", 10.01), 1));
 		BigDecimal payment = BigDecimal.TEN;
 

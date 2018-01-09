@@ -36,20 +36,20 @@ public class ItemServiceTest {
 	@Test
 	public void findAllShouldReturnAllItemsFromRepository() {
 		// Given
-		given(itemRepository.findAll()).willReturn(newArrayList(item(1L, "itemName", 10.0)));
+		given(itemRepository.findAll()).willReturn(newArrayList(item(1010L, "itemName", 10.0)));
 
 		// when
 		List<Item> items = itemService.getAll();
 
 		// then
-		assertThat(items).usingFieldByFieldElementComparator().containsExactly(item(1L, "itemName", 10.0));
+		assertThat(items).usingFieldByFieldElementComparator().containsExactly(item(1010L, "itemName", 10.0));
 	}
 
 	@Test
 	public void saveShouldSaveItemToRepositoryAndReturnItemUpdatedWithId() throws Exception {
 		// Given
 		Item inputItem = item(null, "itemName", 10.0);
-		Item itemUpdatedWithId = item(3L, "itemName", 10.0);
+		Item itemUpdatedWithId = item(3030L, "itemName", 10.0);
 
 		given(itemRepository.save(refEq(inputItem))).willReturn(itemUpdatedWithId);
 
@@ -73,9 +73,9 @@ public class ItemServiceTest {
 	@Test
 	public void updatePriceShouldUpdateItemInRepositoryAndReturnIt() throws Exception {
 		// Given
-		Long itemId = 3L;
+		long itemId = 303L;
 		Item originalItem = item(itemId, "itemName", 10.0);
-		Double newPrice = 15.0;
+		double newPrice = 15.0;
 		Item expectedItem = item(itemId, "itemName", newPrice);
 
 		given(itemRepository.findOne(eq(itemId))).willReturn(originalItem);
@@ -91,8 +91,8 @@ public class ItemServiceTest {
 
 	@Test(expected = InvalidItemException.class)
 	public void updatePriceShouldFailWhenPriceIsInvalid() throws Exception {
-		Long itemId = 3L;
-		Double invalidPrice = -1.0;
+		long itemId = 3030L;
+		double invalidPrice = -1.0;
 
 		given(itemRepository.findOne(eq(itemId))).willReturn(item(itemId, "itemName", 10.0));
 		doThrow(new InvalidItemException("invalid price")).when(itemValidator)
